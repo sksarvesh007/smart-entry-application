@@ -1,0 +1,8 @@
+numpy==1.25.2
+opencv_contrib_python==4.8.1.78
+opencv_python==4.8.1.78
+Pillow==10.1.0
+Pillow==10.3.0
+pytesseract==0.3.10
+python-dotenv==1.0.1
+twilio==9.0.3
