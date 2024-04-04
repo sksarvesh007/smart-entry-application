@@ -5,21 +5,17 @@ import numpy as np
 import os
 from twilio.rest import Client
 from datetime import datetime
-import os
-import os
+import sqlite3
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
 # Twilio Account SID and Auth Token
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER')
-RECIPIENT_PHONE_NUMBER = os.environ.get('RECIPIENT_PHONE_NUMBER')
 
-# Verify that environment variables are set
-if not all([TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER, RECIPIENT_PHONE_NUMBER]):
-    raise ValueError("Please set all required environment variables.")
 
 def preprocess_image(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -32,11 +28,24 @@ def rollnofinder(image):
     rollno = ""
     for word in words:
         # Check if word matches the roll number format
-        if len(word) == 10 and word.startswith('BT') and word[2:4].isdigit() and word[4:7] in ['CSD', 'CSE', 'CSA', 'ECE', 'CSH'] and word[7:].isdigit():
+        if len(word) == 10 and word.startswith('BT') and word[2:4].isdigit() and word[4:7] in ['CSD', 'CSE', 'CSA', 'ECE', 'CSH', 'ECI'] and word[7:].isdigit():
             rollno = word
             break  # Exit loop once a potential roll number is found
-
     return rollno
+
+def get_student_info(roll_number):
+    # Connect to SQLite database
+    conn = sqlite3.connect('database/student_database.db')
+    cursor = conn.cursor()
+
+    # Query student information based on roll number
+    cursor.execute('''SELECT phone_number, name FROM students WHERE roll_number = ?''', (roll_number,))
+    student_info = cursor.fetchone()
+    print(student_info)
+    # Close connection
+    conn.close()
+
+    return student_info
 
 # Use webcam
 cap = cv2.VideoCapture(1)
@@ -89,26 +98,26 @@ if best_frame is not None:
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    # Send WhatsApp message with the image attachment
-    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+    # Get student information from the database
+    student_info = get_student_info(best_rollno)
+    if student_info:
+        # Extract student phone number and name
+        student_phone_number, student_name = student_info
 
-    # Get the current time
-    time_of_exit = datetime.now().strftime("%H:%M:%S")
+        # Get the current time
+        time_of_exit = datetime.now().strftime("%H:%M:%S")
 
-    # Message to include in the WhatsApp message
-    message_body = f"Roll Number: {best_rollno}\nTime of Exit: {time_of_exit}"
-# Get the full path to the image file
-    image_path = os.path.join(os.getcwd(), 'bus-tt', 'image.jpg')
-
-    # Send WhatsApp message with image attachment
-    message = client.messages.create(
-        body=message_body,
-        # media_url=['https://postimg.cc/wyHmdB60'],
-        from_=TWILIO_PHONE_NUMBER,
-        to=RECIPIENT_PHONE_NUMBER,
-        # Use the full path to the image file
-    )
-    print("WhatsApp message sent with image attachment to", RECIPIENT_PHONE_NUMBER)
+        # Send WhatsApp message with the student's information
+        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        message_body = f"Hello {student_name} , your roll no :  {best_rollno}  , Time of exit :  {time_of_exit}."
+        message = client.messages.create(
+            body=message_body,
+            from_=TWILIO_PHONE_NUMBER,
+            to=student_phone_number
+        )
+        print("WhatsApp message sent to", student_phone_number)
+    else:
+        print("Student information not found in the database.")
 
 # Release the camera
 cap.release()
