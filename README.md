@@ -11,3 +11,16 @@ This project is designed to detect roll numbers from live video feed, capture th
    ```
    pip install -r requirements.txt
    ```
+
+## SETUP YOUR TWILIO
+
+* Create a Twilio account if you don't have one already.
+* Obtain your Account SID, Auth Token, and Twilio phone number.
+* Create a `.env` file in the project directory.
+* Add the following lines to the `.env` file and replace the placeholders with your Twilio credentials:
+
+  ```
+  TWILIO_ACCOUNT_SID=your_account_sid
+  TWILIO_AUTH_TOKEN=your_auth_token
+  TWILIO_PHONE_NUMBER=your_twilio_phone_number
+  ```
