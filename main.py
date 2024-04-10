@@ -14,10 +14,28 @@ TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER')
 
+# Load face detection model
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+# Load college logo detection model (You need to replace 'logo_detection_model_path' with the actual path of your logo detection model)
+logo_detection_model_path = 'logo_detection_model_path' 
 
 def preprocess_image(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     return gray
+
+def detect_face(image):
+    faces = face_cascade.detectMultiScale(image, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    return len(faces) > 0
+
+def detect_logo(image):
+    # Logic to detect the college logo using a pre-trained model
+    # Load and apply your logo detection model here
+    # You can use any pre-trained logo detection model or train your own
+    # Placeholder logic:
+    # logo_detected = detect_logo_with_model(image, logo_detection_model_path)
+    logo_detected = True  # Placeholder logic, replace with actual detection
+    return logo_detected
 
 def rollnofinder(image):
     myconfig = r'--oem 3 --psm 6'
@@ -58,8 +76,10 @@ while True:
     cv2.imshow('frame', frame)
     
     rollno = rollnofinder(processed_frame)
+    face_detected = detect_face(processed_frame)
+    logo_detected = detect_logo(processed_frame)
     
-    if rollno:
+    if rollno and face_detected and logo_detected:
         best_frame = frame
         best_rollno = rollno
         break
