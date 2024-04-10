@@ -58,7 +58,6 @@ def get_student_info(roll_number):
     conn.close()
 
     return student_info
-
 cap = cv2.VideoCapture(1)
 
 frame_count = 0
